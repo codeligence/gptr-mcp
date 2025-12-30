@@ -1,6 +1,7 @@
 # GPT Researcher dependencies
-gpt-researcher>=0.14.0
+gpt-researcher>=0.14.5
 python-dotenv
+langchain_aws  # Required for AWS Bedrock LLM support
 
 # MCP dependencies
 fastmcp>=2.8.0

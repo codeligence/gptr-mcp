@@ -8,8 +8,6 @@ services:
     environment:
       - MCP_TRANSPORT=sse
       - DOCKER_CONTAINER=true
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
       - PYTHONUNBUFFERED=1
     env_file:
       - .env
@@ -42,4 +40,4 @@ networks:
   gptr-mcp-net:
     driver: bridge
     # To connect to existing n8n network, run:
-    # docker network connect n8n-mcp-net gptr-mcp 
+    # docker network connect n8n-mcp-net gptr-mcp

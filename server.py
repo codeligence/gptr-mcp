@@ -274,12 +274,52 @@ def research_query(topic: str, goal: str, report_format: str = "research_report"
 async def health_check(request):
     return JSONResponse({"status": "healthy", "service": "mcp-server"})
 
+
+def _check_bedrock_config() -> bool:
+    """
+    Check if AWS Bedrock is configured as the LLM provider.
+
+    Returns True if any LLM env var starts with 'bedrock:' AND
+    AWS credentials appear to be available.
+    """
+    llm_vars = ["FAST_LLM", "SMART_LLM", "STRATEGIC_LLM"]
+    uses_bedrock = any(
+        os.getenv(var, "").startswith("bedrock:")
+        for var in llm_vars
+    )
+
+    if not uses_bedrock:
+        return False
+
+    # Check for AWS credentials (any common method)
+    has_aws_creds = (
+        os.getenv("AWS_ACCESS_KEY_ID") or
+        os.getenv("AWS_PROFILE") or
+        os.path.exists(os.path.expanduser("~/.aws/credentials"))
+    )
+
+    return uses_bedrock and has_aws_creds
+
+
 def run_server():
     """Run the MCP server using FastMCP's built-in event loop handling."""
-    # Check if API keys are set
-    if not os.getenv("OPENAI_API_KEY"):
-        logger.error("OPENAI_API_KEY not found. Please set it in your .env file.")
+    # Check if LLM credentials are configured (OpenAI or AWS Bedrock)
+    has_openai = bool(os.getenv("OPENAI_API_KEY"))
+    has_bedrock = _check_bedrock_config()
+
+    if not has_openai and not has_bedrock:
+        logger.error(
+            "No LLM provider configured. Please set either:\n"
+            "  - OPENAI_API_KEY for OpenAI, or\n"
+            "  - AWS credentials + FAST_LLM/SMART_LLM/STRATEGIC_LLM=bedrock:* for AWS Bedrock"
+        )
         return
+
+    # Log which provider is active
+    if has_bedrock:
+        logger.info("AWS Bedrock configuration detected")
+    if has_openai:
+        logger.info("OpenAI API key detected")
 
     # Determine transport based on environment
     transport = os.getenv("MCP_TRANSPORT", "stdio").lower()
